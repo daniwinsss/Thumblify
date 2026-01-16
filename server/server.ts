@@ -27,6 +27,7 @@ app.use(session({
     secret: process.env.SESSION_SECRET as string,
     resave: false,
     saveUninitialized: false,
+    proxy: true, // Trust the reverse proxy
     cookie: { 
         maxAge: 1000 * 60 * 60 * 24 * 7,
         secure: process.env.NODE_ENV === 'production',
