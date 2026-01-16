@@ -20,7 +20,7 @@ declare module 'express-session' {
 const app = express();
 
 app.use(cors({
-    origin: ['http://localhost:5173', 'http://localhost:3000'],
+    origin: ['http://localhost:5173', 'http://localhost:3000','https://thumblify-phi.vercel.app'],
     credentials: true
 }));
 app.use(session({
