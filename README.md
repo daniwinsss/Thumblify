@@ -2,6 +2,18 @@
 
 Thumbify is an intelligent web application that empowers content creators to generate click-worthy YouTube thumbnails using AI. Leveraging ClipDrop’s text-to-image API, Thumbify transforms simple text descriptions into high-quality visual thumbnails with customizable styles, ratios, and overlays.
 
+<img width="1919" height="1039" alt="image" src="https://github.com/user-attachments/assets/116c0913-401e-4a6a-94cc-e3084cf34c17" />
+
+
+<img width="1901" height="1036" alt="image" src="https://github.com/user-attachments/assets/6cfec019-a862-46f5-9c04-0361ddfc4a37" />
+
+
+<img width="1901" height="1037" alt="image" src="https://github.com/user-attachments/assets/805b836b-0519-483b-8959-131234f5688c" />
+
+
+<img width="1898" height="1029" alt="image" src="https://github.com/user-attachments/assets/f045bd83-2207-4c63-a9dd-60bf8c0972fe" />
+
+
 # 🚀 Key Features
 🎨 AI-Powered Thumbnail Generation
 
