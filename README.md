@@ -19,7 +19,7 @@ Thumbify is an intelligent web application that empowers content creators to gen
 
 Generate stunning thumbnails instantly by describing your idea. Powered by ClipDrop’s advanced text-to-image API.
 
-# 🛠️ Rich Customization
+🛠️ Rich Customization
 
 Choose from multiple:
 
