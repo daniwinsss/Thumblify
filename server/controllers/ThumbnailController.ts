@@ -109,34 +109,6 @@ export const generateThumbnail = async (req: Request, res: Response) => {
                 });
             }
 
-            // Save image to file
-            const filename = `final-output-${Date.now()}.png`;
-            const filePath = path.join(process.cwd(), 'server', 'images', filename);
-            const imagesDir = path.join(process.cwd(), 'server', 'images');
-
-            // Ensure images directory exists
-            if (!fs.existsSync(imagesDir)) {
-                fs.mkdirSync(imagesDir, { recursive: true });
-                console.log(`[DEBUG] Created images directory: ${imagesDir}`);
-            }
-
-            fs.writeFileSync(filePath, finalBuffer);
-            console.log(`[DEBUG] Image saved to local file: ${filePath}`);
-
-            // Verify file was written correctly
-            if (!fs.existsSync(filePath)) {
-                console.error('[ERROR] Failed to write image file to disk');
-                thumbnail.isGenerating = false;
-                await thumbnail.save();
-                return res.status(500).json({
-                    message: 'Failed to save image to local storage',
-                    thumbnail
-                });
-            }
-
-            const fileStats = fs.statSync(filePath);
-            console.log(`[DEBUG] File written successfully, size: ${fileStats.size} bytes`);
-
             // Validate Cloudinary configuration before upload
             const cloudinaryConfig = cloudinary.config();
             console.log('[DEBUG] Cloudinary config check:', {
@@ -151,17 +123,12 @@ export const generateThumbnail = async (req: Request, res: Response) => {
                 console.error('[ERROR] Expected format: cloudinary://api_key:api_secret@cloud_name');
                 console.error('[ERROR] Current CLOUDINARY_URL:', process.env.CLOUDINARY_URL ? 'present' : 'missing');
 
-                try {
-                    fs.unlinkSync(filePath);
-                } catch (unlinkError) {
-                    console.error('Failed to delete local file:', unlinkError);
-                }
                 thumbnail.isGenerating = false;
                 await thumbnail.save();
                 throw new Error('Cloudinary configuration is incomplete. Please check your CLOUDINARY_URL environment variable format: cloudinary://api_key:api_secret@cloud_name');
             }
 
-            // Upload to Cloudinary with retry logic
+            // Upload to Cloudinary directly from buffer (no file system needed)
             let uploadResult;
             const maxRetries = 3;
             let retryCount = 0;
@@ -170,12 +137,21 @@ export const generateThumbnail = async (req: Request, res: Response) => {
                 try {
                     console.log(`[DEBUG] Starting Cloudinary upload attempt ${retryCount + 1}/${maxRetries} for thumbnail ${thumbnail._id}...`);
 
-                    uploadResult = await cloudinary.uploader.upload(filePath, {
-                        resource_type: 'image',
-                        folder: 'thumbnails',
-                        timeout: 60000,
-                        use_filename: true,
-                        unique_filename: true,
+                    // Upload buffer directly to Cloudinary using upload_stream
+                    uploadResult = await new Promise((resolve, reject) => {
+                        const uploadStream = cloudinary.uploader.upload_stream(
+                            {
+                                resource_type: 'image',
+                                folder: 'thumbnails',
+                                timeout: 60000,
+                                unique_filename: true,
+                            },
+                            (error, result) => {
+                                if (error) reject(error);
+                                else resolve(result);
+                            }
+                        );
+                        uploadStream.end(finalBuffer);
                     });
 
                     console.log(`[DEBUG] Cloudinary upload successful on attempt ${retryCount + 1}:`, {
@@ -204,13 +180,7 @@ export const generateThumbnail = async (req: Request, res: Response) => {
                     });
 
                     if (retryCount >= maxRetries) {
-                        // Final attempt failed, clean up and throw error
-                        try {
-                            fs.unlinkSync(filePath);
-                            console.log(`[DEBUG] Local file deleted after failed upload: ${filePath}`);
-                        } catch (unlinkError) {
-                            console.error('Failed to delete local file:', unlinkError);
-                        }
+                        // Final attempt failed, throw error
                         thumbnail.isGenerating = false;
                         await thumbnail.save();
                         throw new Error(`Cloudinary upload failed after ${maxRetries} attempts: ${cloudinaryError?.message || cloudinaryError?.http_code || 'Unknown error'}. Please check your Cloudinary configuration and network connection.`);
@@ -267,13 +237,6 @@ export const generateThumbnail = async (req: Request, res: Response) => {
                 throw new Error(`Failed to save thumbnail: ${saveError?.message || 'Unknown error'}`);
             }
 
-            // Clean up local file
-            try {
-                fs.unlinkSync(filePath);
-                console.log(`[DEBUG] Local file deleted: ${filePath}`);
-            } catch (unlinkError) {
-                console.error('Failed to delete local file:', unlinkError);
-            }
             return;
 
         } catch (clipdropError: any) {
