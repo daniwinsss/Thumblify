@@ -78,13 +78,16 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   useEffect(() => {
     (async () => {
       try {
+        console.log('[AuthContext] Verifying user session...');
         const { data } = await api.get('/api/auth/verify');
+        console.log('[AuthContext] Verify response:', data);
         if (data.user) {
           setUser(data.user as IUser);
           setIsLoggedIn(true);
+          console.log('[AuthContext] User verified:', data.user);
         }
-      } catch (err) {
-        console.log(err);
+      } catch (err: any) {
+        console.log('[AuthContext] Verify failed:', err.response?.status, err.response?.data);
       }
     })();
   }, []);
